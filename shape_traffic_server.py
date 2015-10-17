@@ -5,9 +5,9 @@ between the host machine and other machines.
 import zmq
 import psutil
 import getpass
-import sys
 import argparse
 
+# Parse the arguments.
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", help = "The local port on which the server listens", required = True)
 args = parser.parse_args()
