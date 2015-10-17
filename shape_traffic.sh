@@ -13,23 +13,26 @@ if [ $1 == "reset" ]; then
 		tc qdisc delete dev $IF root	
 	fi
 
-# Initialize.
-elif [ $1 == "initialize" ]; then
-	echo "initializing";
-
-	# Create the root queueing discipline.
-	tc qdisc add dev $IF root handle 1: htb default 30
-
-	# Create the main class which will contain all other classes. We do
-	# this, because that allows HTB to divide excess bandwidth amongst
-	# all child classes.
-	tc class add dev $IF parent 1: classid 1:1 htb rate $DEFAULT_BANDWIDTH
-
-	# Create the default class for traffic that does not need to be shaped.
-	tc class add dev $IF parent 1:1 classid 1:30 htb rate $DEFAULT_BANDWIDTH
-
 # Restrict bandwidth from and to a certain IP address.
 elif [ $1 == "set" ]; then
+
+	# Add the root queueing discipline if it does not exist yet.
+	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 30" | wc -l)
+	if [ $EXISTING_QDISC == "0" ]; then
+		echo "initializing";
+
+		# Create the root queueing discipline.
+		tc qdisc add dev $IF root handle 1: htb default 30
+
+		# Create the main class which will contain all other classes. We do
+		# this, because that allows HTB to divide excess bandwidth amongst
+		# all child classes.
+		tc class add dev $IF parent 1: classid 1:1 htb rate $DEFAULT_BANDWIDTH
+
+		# Create the default class for traffic that does not need to be shaped.
+		tc class add dev $IF parent 1:1 classid 1:30 htb rate $DEFAULT_BANDWIDTH
+	fi
+
 	IP=$2
 	BANDWIDTH=$3
 	echo "restricting traffic with destination and source $IP to $BANDWIDTH";
