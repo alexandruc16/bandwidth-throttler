@@ -6,6 +6,7 @@ import zmq
 import psutil
 import getpass
 import argparse
+from subprocess import PIPE
 
 # Parse the arguments.
 parser = argparse.ArgumentParser()

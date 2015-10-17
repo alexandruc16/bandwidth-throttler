@@ -6,6 +6,18 @@ import zmq
 import argparse
 import sys
 
+'''
+Actually sends a throttle request to the given destination, telling
+it to limit bandwidth for a given IP to the given value.
+'''
+def send_throttle_request(destination, throttle_ip, bandwidth):
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect("tcp://" + destination + ":" + args.port)
+	socket.send("set " + throttle_ip + ":" + bandwidth)
+	message = socket.recv()
+	print "Received reply ",message
+
 # We either want an individual command or a file that contains commands.
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group(required = True)
@@ -33,14 +45,3 @@ elif args.set_file:
 			send_throttle_request(parts[0], parts[1], parts[2])
 	f.close()
 
-'''
-Actually sends a throttle request to the given destination, telling
-it to limit bandwidth for a given IP to the given value.
-'''
-def send_throttle_request(destination, throttle_ip, bandwidth):
-	context = zmq.Context()
-	socket = context.socket(zmq.REQ)
-	socket.connect("tcp://" + destination + ":" + args.port)
-	socket.send("set " + throttle_ip + ":" + bandwidth)
-	message = socket.recv()
-	print "Received reply ",message
