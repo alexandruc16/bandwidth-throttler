@@ -32,7 +32,7 @@ while True:
 			for i in range(1, len(message_parts)):
 				ip, bandwidth = message_parts[i].split(":")
 				print("Setting " + ip + " to " + bandwidth)
-				p = psutil.Popen("/home/" + user + "/bin/shape_traffic", "set", ip, bandwidth, stdout=PIPE)
+				p = psutil.Popen(["/home/" + user + "/bin/shape_traffic", "set", ip, bandwidth] stdout=PIPE)
 				print(p.communicate()[0])
 
 	# Send reply back to client
