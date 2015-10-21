@@ -42,6 +42,8 @@ elif args.set_file:
 		if len(parts) < 3:
 			print("Invalid line, skipping request: " + line)
 		else:
+			# Both ends need traffic shaping.
 			send_throttle_request(parts[0], parts[1], parts[2])
+			send_throttle_request(parts[1], parts[0], parts[2])
 	f.close()
 
