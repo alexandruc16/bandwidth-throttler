@@ -84,12 +84,8 @@ elif args.generate_uniform:
 	# write that to the output file.
 	f = open(output_file, "w")
 	for pair in link_pairs:
+		choice = random.choice(possible_bandwidth_values)
 		from_ip, to_ip = pair
-		f.write(from_ip)
-		f.write(":")
-		f.write(to_ip)
-		f.write(":")
-		f.write(random.choice(possible_bandwidth_values))
-		f.write("\n")
-		
+		f.write(from_ip + ":" + to_ip + ":" + choice + "\n")
+		possible_bandwidth_values.remove(choice)	
 	f.close()
