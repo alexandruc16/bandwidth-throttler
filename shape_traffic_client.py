@@ -5,6 +5,7 @@ to other machines.
 import zmq
 import argparse
 import sys
+import random
 
 '''
 Actually sends a throttle request to the given destination, telling
@@ -21,16 +22,20 @@ def send_throttle_request(destination, throttle_ip, bandwidth):
 
 # We either want an individual command or a file that contains commands.
 parser = argparse.ArgumentParser()
-group = parser.add_mutually_exclusive_group(required = True)
-group.add_argument("--set", help = "throttle the bandwidth between machines: <ip1>:<ip2>:<bandwidth>")
-group.add_argument("--set-file", help = "the given file specifies the bandwidth between machines. See --set for the correct syntax")
-parser.add_argument("--port", help = "The port on the server that the client connects to", required = True)
+set_group = parser.add_mutually_exclusive_group(required = True)
+set_group.add_argument("--set", help = "throttle the bandwidth between machines: <ip1>:<ip2>:<bandwidth>")
+set_group.add_argument("--set-file", help = "the given file specifies the bandwidth between machines. See --set for the correct syntax")
+set_group.add_argument("--generate-uniform", help = """
+takes as first input concatenated ip addresses (<ip1>:<ip2>..), as second input concatenated bandwidth values
+(<bw1>:<bw2>..) and as third input a file. It uniformly distributes the possible bandwidth values over the links. This generates an output
+file which can be given to the program again using --set-file""")
+parser.add_argument("--port", help = "The port on the server that the client connects to")
 args = parser.parse_args()
 
 # Limit a single link.
 if args.set:
 	parts = args.set.split(":")
-	if len(parts) < 3:
+	if len(parts) < 3 or not args.port:
 		parser.print_usage()
 		sys.exit()
 
@@ -43,7 +48,7 @@ elif args.set_file:
 	f = open(args.set_file, "r")
 	for line in f:
 		parts = line.split(":")
-		if len(parts) < 3:
+		if len(parts) < 3 or not args.port:
 			print("Invalid line, skipping request: " + line)
 		else:
 			# Both ends need traffic shaping.
@@ -51,3 +56,40 @@ elif args.set_file:
 			send_throttle_request(parts[1], parts[0], parts[2])
 	f.close()
 
+# Uniformly distribute available bandwidth values between links.
+elif args.generate_uniform:
+	parts = args.generate_uniform.split(" ")
+	if (len(parts) < 3):
+		parser.print_usage()
+		sys.exit()
+	ips = parts[0].split(":")
+	bandwidth_values = parts[1].split(":")
+	output_file = parts[2]
+
+	# First generate all relevant link pairs.
+	link_pairs = []
+	remaining_ips = list(ips)
+	for from_ip in ips:
+		remaining_ips.remove(from_ip)
+		for to_ip in remaining_ips:
+			link_pairs.append((from_ip, to_ip))
+
+	# Now create a list that holds just as much entries,
+	# but with bandwidth values. Will randomly select from that.
+	possible_bandwidth_values = []
+	for i in range(0, len(link_pairs)):
+		possible_bandwidth_values.append(bandwidth_values[i % len(bandwidth_values)])
+
+	# Now randomly assign a bandwidth value to a link pair and
+	# write that to the output file.
+	f = open(output_file, "w")
+	for pair in link_pairs:
+		from_ip, to_ip = pair
+		f.write(from_ip)
+		f.write(":")
+		f.write(to_ip)
+		f.write(":")
+		f.write(random.choice(possible_bandwidth_values))
+		f.write("\n")
+		
+	f.close()
