@@ -18,13 +18,20 @@ The server is run using the following command:
 ```bash
 python shape_traffic_server.py --port <port>
 ```
-The client can be run in two ways, either:
+The client can be run in various ways, for instance:
 ```bash
 python shape_traffic_client.py --port <port> --set <ip1>:<ip2>:<bandwidth>
 ```
-to limit the traffic between two machines, or:
+This will limit the traffic between two machines, or:
 ```bash
 python shape_traffic_client.py --port <port> --set-file <filename>
 ```
-to limit the traffic between multiple machines. Each line in the file should
+which limits the traffic between multiple machines. Each line in the file should
 have the same syntax as the set command.
+
+You can also use the client to uniformly generate bandwidth values between certain links:
+```bash
+python shape_traffic_client.py --generate-uniform <ip1>:<ip2>:.. <bw1>:<bw2>:.. <output_file>
+```
+This will generate an output file that can be supplied to '--set-file'. It will distribute the
+given bandwidth (bw) values uniformly over the links between the given machines.
