@@ -35,6 +35,13 @@ while True:
 				p = psutil.Popen(["/usr/bin/shape_traffic", "set", ip, bandwidth], stdout=PIPE)
 				print(p.communicate()[0])
 
+		# Remove all bandwidth throttles
+		if (command == "reset"):
+				print("Resetting all bandwidth rules")
+				p = psutil.Popen(["/usr/bin/shape_traffic", "reset"], stdout=PIPE)
+				print(p.communicate()[0])
+				
+
 	# Send reply back to client
-	socket.send("Confirmation")
+	socket.send("Executed request: %s" % message)
 
