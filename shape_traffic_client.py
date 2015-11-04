@@ -20,10 +20,25 @@ def send_throttle_request(destination, throttle_ip, bandwidth):
 	message = socket.recv()
 	print "Received reply ",message
 
+'''
+Send a reset request to the given destination, telling it to remove
+any bandwidth restrictions in place.
+'''
+def send_reset_request(destination):
+	print "Going to send reset request to " + destination
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect("tcp://" + destination + ":" + args.port)
+	socket.send("reset")
+	message = socket.recv()
+	print "Received reply ",message
+	
+
 # We either want an individual command or a file that contains commands.
 parser = argparse.ArgumentParser()
 set_group = parser.add_mutually_exclusive_group(required = True)
 set_group.add_argument("--set", help = "throttle the bandwidth between machines: <ip1>:<ip2>:<bandwidth>")
+set_group.add_argument("--reset", help = "removes the bandwidth throttles on the given machines: <ip1>:<ip2>:..")
 set_group.add_argument("--set-file", help = "the given file specifies the bandwidth between machines. See --set for the correct syntax")
 set_group.add_argument("--generate-uniform", help = """
 takes as first input concatenated ip addresses (<ip1>:<ip2>..), as second input concatenated bandwidth values
@@ -89,3 +104,6 @@ elif args.generate_uniform:
 		f.write(from_ip + ":" + to_ip + ":" + choice + "\n")
 		possible_bandwidth_values.remove(choice)	
 	f.close()
+
+# Reset throttles on the given machines.
+elif args.reset:
