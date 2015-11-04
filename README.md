@@ -18,6 +18,8 @@ The server is run using the following command:
 ```bash
 python shape_traffic_server.py --port <port>
 ```
+It expects the contents of `shape_traffic.sh` to be in `/usr/bin/shape_traffic`
+
 The client can be run in various ways, for instance:
 ```bash
 python shape_traffic_client.py --port <port> --set <ip1>:<ip2>:<bandwidth>
@@ -35,3 +37,8 @@ python shape_traffic_client.py --generate-uniform <ip1>:<ip2>:.. <bw1>:<bw2>:.. 
 ```
 This will generate an output file that can be supplied to '--set-file'. It will distribute the
 given bandwidth (bw) values uniformly over the links between the given machines.
+
+If you want to clear any set bandwidth throttles, you can send a reset request to a machine:
+```bash
+python shape_traffic_client.py --reset <ip1>:<ip2>:...
+```
