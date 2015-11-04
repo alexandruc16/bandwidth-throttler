@@ -107,3 +107,6 @@ elif args.generate_uniform:
 
 # Reset throttles on the given machines.
 elif args.reset:
+	parts = args.reset.split(":")
+	for ip in parts:
+		send_reset_request(ip)
