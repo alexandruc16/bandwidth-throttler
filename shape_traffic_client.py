@@ -87,7 +87,7 @@ if args.set_all:
 		sys.exit()
 
 	# Send the request.
-	send_throttle_interface_request(parts[0], parts[1]):
+	send_throttle_interface_request(parts[0], parts[1])
 
 # Limit one or multiple links in the given file.
 elif args.set_file:
