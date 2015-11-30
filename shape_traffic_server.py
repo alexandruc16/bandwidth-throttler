@@ -35,11 +35,18 @@ while True:
 				p = psutil.Popen(["/usr/bin/shape_traffic", "set", ip, bandwidth], stdout=PIPE)
 				print(p.communicate()[0])
 
+		# Limit the traffic on the interface as a whole.
+		if (command == "set-all"):
+			bandwidth = message_parts[1]
+			print("Setting interface to: " + bandwidth)
+			p = psutil.Popen(["/usr/bin/shape_traffic", "set-all", bandwidth], stdout=PIPE)
+			print(p.communicate()[0])
+
 		# Remove all bandwidth throttles
 		if (command == "reset"):
-				print("Resetting all bandwidth rules")
-				p = psutil.Popen(["/usr/bin/shape_traffic", "reset"], stdout=PIPE)
-				print(p.communicate()[0])
+			print("Resetting all bandwidth rules")
+			p = psutil.Popen(["/usr/bin/shape_traffic", "reset"], stdout=PIPE)
+			print(p.communicate()[0])
 				
 
 	# Send reply back to client

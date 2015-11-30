@@ -62,4 +62,25 @@ elif [ $1 == "set" ]; then
 		tc filter add dev $IF parent 1: protocol ip prio 1 u32 match ip dst $IP flowid 1:$CLASS_ID
 		tc filter add dev $IF parent 1: protocol ip prio 1 u32 match ip src $IP flowid 1:$CLASS_ID
 	fi
+
+# Restrict all traffic on the default interface.
+elif [ $1 == "set-all" ]; then
+	BANDWIDTH=$2
+
+	# Delete any set rules first.
+	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 30" | wc -l)
+	if [ $EXISTING_QDISC != "0" ]; then
+		echo "deleting default rules";
+		tc qdisc del dev eth0 root
+	fi
+
+	# Create the root queueing discipline.
+	tc qdisc add dev $IF root handle 1: htb default 30
+
+	# Create the main class.
+	tc class add dev $IF parent 1: classid 1:1 htb rate $BANDWIDTH
+
+	# Create the one class for all traffic.
+	tc class add dev $IF parent 1:1 classid 1:30 htb rate $BANDWIDTH
 fi
+
