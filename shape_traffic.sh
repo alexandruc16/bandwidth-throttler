@@ -72,15 +72,34 @@ elif [ $1 == "set-all" ]; then
 	if [ $EXISTING_QDISC != "0" ]; then
 		echo "deleting default rules";
 		tc qdisc del dev eth0 root
+		tc qdisc del dev eth0 ingress
 	fi
 
-	# Create the root queueing discipline.
-	tc qdisc add dev $IF root handle 1: htb default 30
+	# See if the virtual interface for ingress traffic already exists.
+	EXISTING_VIRTUAL_IF=$(ifconfig | grep "ifb0")
+	if [ -z "$EXISTING_VIRTUAL_IF" ]; then
+		# Create the virtual interface.
+		modprobe ifb numifbs=1
+		
+		# Set it up.
+		ip link set dev ifb0 up
 
-	# Create the main class.
+	fi	
+
+	# Create the root queueing disciplines for ingress and egress traffic.
+	tc qdisc add dev $IF root handle 1: htb default 10
+	tc qdisc add dev ifb0 root handle 1: htb default 10
+
+	# Create the main classes.
 	tc class add dev $IF parent 1: classid 1:1 htb rate $BANDWIDTH
+	tc class add dev ifb0 parent 1: classid 1:1 htb rate $BANDWIDTH
 
-	# Create the one class for all traffic.
-	tc class add dev $IF parent 1:1 classid 1:30 htb rate $BANDWIDTH
+	# Create the one class for all traffic both ingress and egress.
+	tc class add dev $IF parent 1:1 classid 1:10 htb rate $BANDWIDTH
+	tc class add dev ifb0 parent 1:1 classid 1:10 htb rate $BANDWIDTH
+
+	# Redirect ingress traffic to the virtual interface.
+	tc qdisc add dev eth0 handle ffff: ingress
+	tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
 fi
 
