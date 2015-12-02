@@ -101,7 +101,7 @@ elif [ $1 == "set-all" ]; then
 
 	# Redirect ingress traffic to the virtual interface.
 	tc qdisc add dev eth0 handle ffff: ingress
-	tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
-	tc filter add dev eth0 parent 1: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
+	tc filter add dev eth0 parent ffff: protocol ip prio 20 u32 match u32 0 0 action mirred egress redirect dev ifb0
+	tc filter add dev eth0 parent 1: protocol ip prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb0
 fi
 
