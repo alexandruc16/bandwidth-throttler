@@ -107,8 +107,8 @@ elif [ $1 == "set-all" ]; then
 	CHILD_BANDWIDTH=${BANDWIDTH%mbit}
 	CHILD_BANDWIDTH=$((CHILD_BANDWIDTH/2))
 
-	# Adding 10 percent more bandwidth to ingress traffic seems to balance things out.	
-	IMBALANCE=`echo "(1/10)*$CHILD_BANDWIDTH" | bc -l`
+	# Adding 20 percent more bandwidth to ingress traffic seems to balance things out.	
+	IMBALANCE=`echo "(1/5)*$CHILD_BANDWIDTH" | bc -l`
 	IMBALANCE=${IMBALANCE%.*}
 	SPECIFIER=mbit
 	INGRESS_BANDWIDTH=$((CHILD_BANDWIDTH+IMBALANCE))
