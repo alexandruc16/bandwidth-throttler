@@ -55,6 +55,7 @@ set_group.add_argument("--set", help = "throttle the bandwidth between machines:
 set_group.add_argument("--set-all", help = "throttle the bandwidth of an interface on the given machines: <ip>:<bandwidth>")
 set_group.add_argument("--reset", help = "removes the bandwidth throttles on the given machines: <ip1>:<ip2>:..")
 set_group.add_argument("--set-file", help = "the given file specifies the bandwidth between machines. See --set for the correct syntax")
+set_group.add_argument("--set-all-file", help = "the given file specifies the bandwidth of the interface on machines. See --set-all for the correct syntax")
 set_group.add_argument("--generate-uniform", help = """
 takes as first input concatenated ip addresses (<ip1>:<ip2>..), as second input concatenated bandwidth values
 (<bw1>:<bw2>..) and as third input a file. It uniformly distributes the possible bandwidth values over the links. This generates an output
@@ -100,6 +101,18 @@ elif args.set_file:
 			# Both ends need traffic shaping.
 			send_throttle_request(parts[0], parts[1], parts[2])
 			send_throttle_request(parts[1], parts[0], parts[2])
+	f.close()
+
+# Limit the interface on one or multiple machines in the given file.
+elif args.set_all_file:
+	f = open(args.set_all_file, "r")
+	for line in f:
+		parts = line.split(":")
+		if len(parts) < 2 or not args.port:
+			print("Invalid line, skipping request: " + line)
+		else:
+			# Send the request.
+			send_throttle_interface_request(parts[0], parts[1])
 	f.close()
 
 # Uniformly distribute available bandwidth values between links.
