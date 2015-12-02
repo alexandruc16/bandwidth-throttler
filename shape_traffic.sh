@@ -68,7 +68,7 @@ elif [ $1 == "set-all" ]; then
 	BANDWIDTH=$2
 
 	# Delete any set rules first.
-	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 30" | wc -l)
+	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 10" | wc -l)
 	if [ $EXISTING_QDISC != "0" ]; then
 		echo "deleting default rules";
 		tc qdisc del dev eth0 root
