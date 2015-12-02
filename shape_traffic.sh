@@ -68,7 +68,7 @@ elif [ $1 == "set-all" ]; then
 	BANDWIDTH=$2
 
 	# Delete any set rules first.
-	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 10" | wc -l)
+	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "ingress" | wc -l)
 	if [ $EXISTING_QDISC != "0" ]; then
 		echo "deleting default rules";
 		tc qdisc del dev eth0 root
@@ -86,6 +86,8 @@ elif [ $1 == "set-all" ]; then
 		ip link set dev ifb0 up
 
 	fi	
+	tc qdisc add dev eth0 handle ffff: ingress
+	tc filter add dev eth0 parent ffff: protocol ip prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb0
 
 	# Create the root queueing disciplines for ingress and egress traffic.
 	tc qdisc add dev $IF root handle 1: htb default 10
@@ -95,13 +97,30 @@ elif [ $1 == "set-all" ]; then
 	tc class add dev $IF parent 1: classid 1:1 htb rate $DEFAULT_BANDWIDTH
 	tc class add dev ifb0 parent 1: classid 1:1 htb rate $BANDWIDTH
 
-	# Create the one class for all traffic both ingress and egress.
+	# Create the parent class for all traffic both ingress and egress.
 	tc class add dev $IF parent 1:1 classid 1:10 htb rate $DEFAULT_BANDWIDTH
 	tc class add dev ifb0 parent 1:1 classid 1:10 htb rate $BANDWIDTH
 
-	# Redirect ingress traffic to the virtual interface.
-	tc qdisc add dev eth0 handle ffff: ingress
-	tc filter add dev eth0 parent ffff: protocol ip prio 20 u32 match u32 0 0 action mirred egress redirect dev ifb0
-	tc filter add dev eth0 parent 1: protocol ip prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb0
+	# Create the sub classes for ingress and egress traffic from the default interface.
+	# This appears to be working better than letting the parent class deal with
+	# all the traffic.
+	CHILD_BANDWIDTH=${BANDWIDTH%mbit}
+	CHILD_BANDWIDTH=$((CHILD_BANDWIDTH/2))
+
+	# Adding 10 percent more bandwidth to ingress traffic seems to balance things out.	
+	IMBALANCE=`echo "(1/10)*$CHILD_BANDWIDTH" | bc -l`
+	IMBALANCE=${IMBALANCE%.*}
+	SPECIFIER=mbit
+	INGRESS_BANDWIDTH=$((CHILD_BANDWIDTH+IMBALANCE))
+	INGRESS_BANDWIDTH=$INGRESS_BANDWIDTH$SPECIFIER
+	EGRESS_BANDWIDTH=$((CHILD_BANDWIDTH-IMBALANCE))
+	EGRESS_BANDWIDTH=$EGRESS_BANDWIDTH$SPECIFIER
+	tc class add dev ifb0 parent 1:10 classid 1:20 htb rate $INGRESS_BANDWIDTH ceil $BANDWIDTH
+	tc filter add dev ifb0 parent 1: protocol ip u32 match ip dst 10.141.0.139 flowid 1:20
+	tc class add dev ifb0 parent 1:10 classid 1:30 htb rate $EGRESS_BANDWIDTH ceil $BANDWIDTH
+	tc filter add dev ifb0 parent 1: protocol ip u32 match ip src 10.141.0.139 flowid 1:30
+
+	# Redirect egress traffic to the virtual interface.
+	tc filter add dev eth0 parent 1: protocol ip prio 20 u32 match u32 0 0 action mirred egress redirect dev ifb0
 fi
 
