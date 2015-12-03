@@ -115,9 +115,10 @@ elif [ $1 == "set-all" ]; then
 	INGRESS_BANDWIDTH=$INGRESS_BANDWIDTH$SPECIFIER
 	EGRESS_BANDWIDTH=$((CHILD_BANDWIDTH-IMBALANCE))
 	EGRESS_BANDWIDTH=$EGRESS_BANDWIDTH$SPECIFIER
-	tc class add dev ifb0 parent 1:10 classid 1:20 htb rate $INGRESS_BANDWIDTH ceil $BANDWIDTH
+	CHILD_BANDWIDTH=$CHILD_BANDWIDTH$SPECIFIER
+	tc class add dev ifb0 parent 1:10 classid 1:20 htb rate $CHILD_BANDWIDTH ceil $BANDWIDTH
 	tc filter add dev ifb0 parent 1: protocol ip u32 match ip dst 10.141.0.139 flowid 1:20
-	tc class add dev ifb0 parent 1:10 classid 1:30 htb rate $EGRESS_BANDWIDTH ceil $BANDWIDTH
+	tc class add dev ifb0 parent 1:10 classid 1:30 htb rate $CHILD_BANDWIDTH ceil $BANDWIDTH
 	tc filter add dev ifb0 parent 1: protocol ip u32 match ip src 10.141.0.139 flowid 1:30
 
 	# Redirect egress traffic to the virtual interface.
