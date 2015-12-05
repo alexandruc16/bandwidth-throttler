@@ -68,60 +68,25 @@ elif [ $1 == "set-all" ]; then
 	BANDWIDTH=$2
 
 	# Delete any set rules first.
-	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "ingress" | wc -l)
+	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 10" | wc -l)
 	if [ $EXISTING_QDISC != "0" ]; then
 		echo "deleting default rules";
 		tc qdisc del dev eth0 root
 		tc qdisc del dev eth0 ingress
-		tc qdisc del dev ifb0 root
 	fi
 
-	# See if the virtual interface for ingress traffic already exists.
-	EXISTING_VIRTUAL_IF=$(ifconfig | grep "ifb0")
-	if [ -z "$EXISTING_VIRTUAL_IF" ]; then
-		# Create the virtual interface.
-		modprobe ifb numifbs=1
-		
-		# Set it up.
-		ip link set dev ifb0 up
-
-	fi	
+	# Police the incoming traffic, drop packets over the bandwidth rate.
 	tc qdisc add dev eth0 handle ffff: ingress
-	tc filter add dev eth0 parent ffff: protocol ip prio 10 u32 match u32 0 0 action mirred egress redirect dev ifb0
+	tc filter add dev eth0 parent ffff: protocol ip prio 10 u32 match u32 0 0 action police rate $BANDWIDTH burst 5000k drop
 
-	# Create the root queueing disciplines for ingress and egress traffic.
+	# Create the root queueing discipline for egress traffic.
 	tc qdisc add dev $IF root handle 1: htb default 10
-	tc qdisc add dev ifb0 root handle 1: htb default 10
 
-	# Create the main classes.
-	tc class add dev $IF parent 1: classid 1:1 htb rate $DEFAULT_BANDWIDTH
-	tc class add dev ifb0 parent 1: classid 1:1 htb rate $BANDWIDTH
+	# Create the main class.
+	tc class add dev $IF parent 1: classid 1:1 htb rate $BANDWIDTH
 
-	# Create the parent class for all traffic both ingress and egress.
-	tc class add dev $IF parent 1:1 classid 1:10 htb rate $DEFAULT_BANDWIDTH
-	tc class add dev ifb0 parent 1:1 classid 1:10 htb rate $BANDWIDTH
+	# Create the parent class.
+	tc class add dev $IF parent 1:1 classid 1:10 htb rate $BANDWIDTH
 
-	# Create the sub classes for ingress and egress traffic from the default interface.
-	# This appears to be working better than letting the parent class deal with
-	# all the traffic.
-	CHILD_BANDWIDTH=${BANDWIDTH%mbit}
-	CHILD_BANDWIDTH=$((CHILD_BANDWIDTH/2))
-
-	# Adding 20 percent more bandwidth to ingress traffic seems to balance things out.	
-	IMBALANCE=`echo "(1/5)*$CHILD_BANDWIDTH" | bc -l`
-	IMBALANCE=${IMBALANCE%.*}
-	SPECIFIER=mbit
-	INGRESS_BANDWIDTH=$((CHILD_BANDWIDTH+IMBALANCE))
-	INGRESS_BANDWIDTH=$INGRESS_BANDWIDTH$SPECIFIER
-	EGRESS_BANDWIDTH=$((CHILD_BANDWIDTH-IMBALANCE))
-	EGRESS_BANDWIDTH=$EGRESS_BANDWIDTH$SPECIFIER
-	CHILD_BANDWIDTH=$CHILD_BANDWIDTH$SPECIFIER
-	tc class add dev ifb0 parent 1:10 classid 1:20 htb rate $CHILD_BANDWIDTH ceil $BANDWIDTH
-	tc filter add dev ifb0 parent 1: protocol ip u32 match ip dst 10.141.0.139 flowid 1:20
-	tc class add dev ifb0 parent 1:10 classid 1:30 htb rate $CHILD_BANDWIDTH ceil $BANDWIDTH
-	tc filter add dev ifb0 parent 1: protocol ip u32 match ip src 10.141.0.139 flowid 1:30
-
-	# Redirect egress traffic to the virtual interface.
-	tc filter add dev eth0 parent 1: protocol ip prio 20 u32 match u32 0 0 action mirred egress redirect dev ifb0
 fi
 
