@@ -34,7 +34,7 @@ def get_crnt_psutil_data(interface):
     '''
     current_stats = psutil.net_io_counters(pernic=True)
     interface_stats = current_stats[interface]
-    return int(interface_stats.bytes_recv), int(interface_stats.bytes_send)
+    return int(interface_stats.bytes_recv), int(interface_stats.bytes_sent)
 
 def main(interface, outgoing_file, incoming_file, method):
     out_file = open(outgoing_file, "w")
