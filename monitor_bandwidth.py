@@ -39,11 +39,16 @@ def get_crnt_psutil_data(interface):
 def main(interface, outgoing_file, incoming_file, method):
     out_file = open(outgoing_file, "w")
     in_file = open(incoming_file, "w")
-    old_in, old_out = get_crnt_net_data(interface)
+    if method == 'proc':
+        old_in, old_out = get_crnt_net_data(interface)
+    else:
+        old_in, old_out = get_crnt_psutil_data(interface)
     while 1:
         sleep(1)
-
-        new_in, new_out = get_crnt_net_data(interface)
+        if method == 'proc':
+            new_in, new_out = get_crnt_net_data(interface)
+        else:
+            new_in, new_out = get_crnt_psutil_data(interface)
         diff_in = new_in - old_in
         diff_out = new_out - old_out
 
