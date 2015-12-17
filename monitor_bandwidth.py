@@ -35,10 +35,10 @@ def main(interface, outgoing_file, incoming_file):
         old_in = new_in
         old_out = new_out
 
-        out_file.write(str((diff_out / (float)(1000 * 1000)) * 8) + "\n")
+        out_file.write(str((diff_out / (float)(1024 * 1024)) * 8) + "\n")
         out_file.flush()
 
-        in_file.write(str((diff_in / (float)(1000 * 1000)) * 8) + "\n")
+        in_file.write(str((diff_in / (float)(1024 * 1024)) * 8) + "\n")
         in_file.flush()
 
 if __name__ == "__main__":
