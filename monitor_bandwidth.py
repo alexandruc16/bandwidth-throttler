@@ -62,7 +62,7 @@ def main(interface, outgoing_file, incoming_file, method, proc_index):
         in_file.flush()
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    if len(sys.argv) < 5:
         print("usage: monitor_bw.py INTERFACE OUTGOING_FILE INCOMING_FILE METHOD [PROC_INDEX]\n")
     else:
         interface = sys.argv[1]
