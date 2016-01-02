@@ -88,5 +88,8 @@ elif [ $1 == "set-all" ]; then
 	# Create the parent class.
 	tc class add dev $IF parent 1:1 classid 1:10 htb rate $BANDWIDTH
 
+	# Export the bandwidth value to an environment variable.
+	export BANDWIDTH_VALUE="${BANDWIDTH/mbit/}"
+
 fi
 

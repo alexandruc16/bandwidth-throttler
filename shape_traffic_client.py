@@ -1,7 +1,7 @@
-'''
+"""
 Simple client that is able to issue bandwidth throttling requests
 to other machines.
-'''
+"""
 import zmq
 import argparse
 import sys
