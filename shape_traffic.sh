@@ -89,5 +89,8 @@ elif [ $1 == "set-all" ]; then
 	# Create the parent class.
 	tc class add dev $IF parent 1:1 classid 1:10 htb rate $BANDWIDTH
 
+	# Log the bandwidth value for others to use.
+	BANDWIDTH_VALUE="${BANDWIDTH/mbit/}"
+	echo "$BANDWIDTH_VALUE" > /var/log/current_bandwidth
 fi
 
