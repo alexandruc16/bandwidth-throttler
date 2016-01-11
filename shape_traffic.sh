@@ -8,9 +8,10 @@ if [ $1 == "reset" ]; then
 
 	# Delete the root queueing discipline (if it exists) to reset the system 
 	# to normal.
-	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 30" | wc -l)
+	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 10" | wc -l)
 	if [ $EXISTING_QDISC != "0" ]; then
-		tc qdisc delete dev $IF root	
+		tc qdisc delete dev $IF root
+		tc qdisc delete dev $IF ingress	
 	fi
 
 # Restrict bandwidth from and to a certain IP address.
