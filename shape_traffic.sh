@@ -1,6 +1,6 @@
 #!/bin/bash
 DEFAULT_BANDWIDTH="1000mbit"
-IF="eth0"
+IF=$(ls -1 /sys/class/net | head -1)
 
 # Reset to initial state.
 if [ $1 == "reset" ]; then
@@ -72,13 +72,13 @@ elif [ $1 == "set-all" ]; then
 	EXISTING_QDISC=$(tc qdisc show dev $IF | grep "default 10" | wc -l)
 	if [ $EXISTING_QDISC != "0" ]; then
 		echo "deleting default rules";
-		tc qdisc del dev eth0 root
-		tc qdisc del dev eth0 ingress
+		tc qdisc del dev $IF root
+		tc qdisc del dev $IF ingress
 	fi
 
 	# Police the incoming traffic, drop packets over the bandwidth rate.
-	tc qdisc add dev eth0 handle ffff: ingress
-	tc filter add dev eth0 parent ffff: protocol ip prio 10 u32 match u32 0 0 action police rate $BANDWIDTH burst 5000k drop
+	tc qdisc add dev $IF handle ffff: ingress
+	tc filter add dev $IF parent ffff: protocol ip prio 10 u32 match u32 0 0 action police rate $BANDWIDTH burst 5000k drop
 
 	# Create the root queueing discipline for egress traffic.
 	tc qdisc add dev $IF root handle 1: htb default 10
